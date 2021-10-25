@@ -116,7 +116,7 @@ beamforming_get_report_frame(
 	PRT_RFD rfd,
 	POCTET_STRING p_pdu_os)
 {
-    RTW_INFO("[mydebug] [beamforming_get_report_frame] enter 1\n");
+    RTW_INFO("[bfdebug] [beamforming_get_report_frame] enter 1\n");
     HAL_DATA_TYPE *hal_data = GET_HAL_DATA((PADAPTER)adapter);
 	struct dm_struct *dm = &hal_data->DM_OutSrc;
 	struct _RT_BEAMFORMEE_ENTRY *beamform_entry = NULL;
@@ -343,8 +343,10 @@ void construct_vht_ndpa_packet(
 	/* @Frame control. */
 	SET_80211_HDR_FRAME_CONTROL(p_ndpa_frame, 0);
 	SET_80211_HDR_TYPE_AND_SUBTYPE(p_ndpa_frame, Type_NDPA);
-
+    
+    /* Set receiver address */
 	SET_80211_HDR_ADDRESS1(p_ndpa_frame, RA);
+    /* Set transmitter address */
 	SET_80211_HDR_ADDRESS2(p_ndpa_frame, beamform_entry->my_mac_addr);
 
 	// 2017/11 MH PHYDM compile. But why need to use windows maco?
@@ -452,7 +454,7 @@ send_sw_vht_ndpa_packet(
 	u16 AID,
 	enum channel_width BW)
 {
-	RTW_INFO("[mydebug] enter_sw_vht_ndpa_packet 1\n");
+	RTW_INFO("[bfdebug] enter_sw_vht_ndpa_packet 1\n");
     struct dm_struct *dm = (struct dm_struct *)dm_void;
 	void *adapter = dm->adapter;
 	PRT_TCB tcb;
@@ -727,7 +729,7 @@ send_sw_vht_bf_report_poll(
 	struct _RT_BEAMFORMEE_ENTRY *beamform_entry = phydm_beamforming_get_bfee_entry_by_addr(dm, RA, &idx);
 	void *adapter = beam_info->source_adapter;
     
-    RTW_INFO("[mydebug] [send_sw_vht_bf_report_poll] enter\n");
+    RTW_INFO("[bfdebug] [send_sw_vht_bf_report_poll] enter\n");
 	PHYDM_DBG(dm, DBG_TXBF, "[%s] Start!\n", __func__);
 
 	PlatformAcquireSpinLock(adapter, RT_TX_SPINLOCK);
@@ -1001,12 +1003,17 @@ dbg_send_sw_vht_mundpa_packet(
 
 #elif (DM_ODM_SUPPORT_TYPE == ODM_CE)
 
+/*
+ * 2021/10/25: modified by @Vito-Swift (chenhaowu@link.cuhk.edu.hk)
+ * replace dummy implementation of beamforming report frame with 
+ * correct implementation according to 802.11ac standard
+ */
 u32 beamforming_get_report_frame(
 	void *dm_void,
 	union recv_frame *precv_frame)
 {
     // entry point of beamforming polling
-    RTW_INFO("[mydebug] [beamforming_get_report_frame] enter 2\n");
+    RTW_INFO("[bfdebug] [beamforming_get_report_frame] enter 2\n");
 	struct dm_struct *dm = (struct dm_struct *)dm_void;
 	u32 ret = _SUCCESS;
 	struct _RT_BEAMFORMEE_ENTRY *beamform_entry = NULL;
@@ -1014,6 +1021,11 @@ u32 beamforming_get_report_frame(
 	u32 frame_len = precv_frame->u.hdr.len;
 	u8 *TA;
 	u8 idx, offset;
+    
+    u8 category, action;
+    u8 *pMIMOCtrlField, *pCSIMatrix;
+    u8 Nc = 0, Nr = 0, CH_W = 0, Ng = 0, CodeBook = 0;
+    u16 CSIMatrixLen = 0;
 
 	/*@Memory comparison to see if CSI report is the same with previous one*/
 	TA = get_addr2_ptr(pframe);
@@ -1024,13 +1036,32 @@ u32 beamforming_get_report_frame(
         return _FAIL;
     
     if (beamform_entry->beamform_entry_cap & BEAMFORMER_CAP_VHT_SU)
-		offset = 31; /*@24+(1+1+3)+2  MAC header+(Category+ActionCode+MIMOControlField)+SNR(nc=2)*/
-	else if (beamform_entry->beamform_entry_cap & BEAMFORMER_CAP_HT_EXPLICIT)
-		offset = 34; /*@24+(1+1+6)+2  MAC header+(Category+ActionCode+MIMOControlField)+SNR(nc=2)*/
-	else
+    {
+		RTW_INFO("[bfdebug] [%s] received VHT_SU beamforming report frame.\n", __func__);
+        offset = 31; /*@24+(1+1+3)+2  MAC header+(Category+ActionCode+MIMOControlField)+SNR(nc=2)*/
+        
+        pMIMOCtrlField = pframe + 26;
+        Nc = (*pMIMOCtrlField) & 0x7;
+        Nr = ((*pMIMOCtrlField) & 0x38) >> 3;
+        CH_W =  (((*pMIMOCtrlField) & 0xC0) >> 6);
+        Ng = (*(pMIMOCtrlField+1)) & 0x3;
+        CodeBook = ((*(pMIMOCtrlField+1)) & 0x4) >> 2;
+        pCSIMatrix = pMIMOCtrlField + 3 + Nc;
+        CSIMatrixLen = frame_len - 26 - 3 - Nc;
+
+        RTW_INFO("[bfdebug] [%s] pkt type %d-%d, Nc=%d, Nr=%d, CH_W=%d, Ng=%d, Codebook=%d\n", 
+                __func__, category, action, Nc, Nr, CH_W, Ng, CodeBook);
+    }
+    else if (beamform_entry->beamform_entry_cap & BEAMFORMER_CAP_HT_EXPLICIT)
+    {	
+        offset = 34; /*@24+(1+1+6)+2  MAC header+(Category+ActionCode+MIMOControlField)+SNR(nc=2)*/
+    }
+    else
 		return ret;
 
-	return ret;
+    /* Update CSI info*/
+	
+    return ret;
 }
 
 boolean
@@ -1315,7 +1346,7 @@ send_sw_vht_ndpa_packet(
 	u16 AID,
 	enum channel_width BW)
 {
-    RTW_INFO("[mydebug] enter_sw_vht_ndpa_packet 2\n");	
+    RTW_INFO("[bfdebug] enter_sw_vht_ndpa_packet 2\n");	
     struct dm_struct *dm = (struct dm_struct *)dm_void;
 	struct _ADAPTER *adapter = dm->adapter;
 	struct xmit_frame *pmgntframe;
@@ -1439,8 +1470,8 @@ void beamforming_get_ndpa_frame(
 	if (get_frame_sub_type(p_ndpa_frame) != WIFI_NDPA)
 #endif
 		return;
-	else if (!(dm->support_ic_type & (ODM_RTL8812 | ODM_RTL8821))) {
-		PHYDM_DBG(dm, DBG_TXBF, "[%s] not 8812 or 8821A, return\n",
+	else if (!(dm->support_ic_type & (ODM_RTL8812 | ODM_RTL8821 | ODM_RTL8814))) {
+		PHYDM_DBG(dm, DBG_TXBF, "[%s] not 8812 or 8821A or 8814, return\n",
 			  __func__);
 		return;
 	}
