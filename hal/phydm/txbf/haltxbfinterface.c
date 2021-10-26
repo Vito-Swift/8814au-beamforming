@@ -1003,6 +1003,24 @@ dbg_send_sw_vht_mundpa_packet(
 
 #elif (DM_ODM_SUPPORT_TYPE == ODM_CE)
 
+void printMemory(const unsigned char mem[], int count) {
+    int i, k = 0;
+    char hexbyte[11] = "";
+    char hexline[126] = "";
+    for (i=0; i<count; i++) { // traverse through mem until count is reached
+        sprintf(hexbyte, "0x%02X|", mem[i]); // add current byte to hexbyte
+        strcat(hexline, hexbyte); // add hexbyte to hexline
+        // print line every 16 bytes or if this is the last for-loop
+        if (((i+1)%16 == 0) && (i != 0) || (i+1==count)) {
+            k++;
+            // choose your favourite output:
+            //printf("l%d: %s\n",k , hexline); // print line to console
+            //syslog(LOG_INFO, "l%d: %s",k , hexline); // print line to syslog
+            RTW_INFO("l%d: %s",k , hexline); // print line to kernellog
+            memset(&hexline[0], 0, sizeof(hexline)); // clear hexline array
+        }
+    }
+}
 /*
  * 2021/10/25: modified by @Vito-Swift (chenhaowu@link.cuhk.edu.hk)
  * replace dummy implementation of beamforming report frame with 
@@ -1051,6 +1069,9 @@ u32 beamforming_get_report_frame(
 
         RTW_INFO("[bfdebug] [%s] pkt type %d-%d, Nc=%d, Nr=%d, CH_W=%d, Ng=%d, Codebook=%d\n", 
                 __func__, category, action, Nc, Nr, CH_W, Ng, CodeBook);
+        RTW_INFO("[bfdebug] [%s] \t\t CSIMatrixLen: %d\n", __func__, CSIMatrixLen);
+        RTW_INFO("[bfdebug] [%s] CSI Matrix Content:\n", __func__);
+        printMemory(pCSIMatrix, CSIMatrixLen);
     }
     else if (beamform_entry->beamform_entry_cap & BEAMFORMER_CAP_HT_EXPLICIT)
     {	

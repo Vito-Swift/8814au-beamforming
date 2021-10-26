@@ -2564,7 +2564,7 @@ u8 rtw_reset_drv_sw(_adapter *padapter)
 u8 rtw_init_drv_sw(_adapter *padapter)
 {
 	u8	ret8 = _SUCCESS;
-    RTW_INFO("[mydebug] enter rtw_init_drv_sw\n");
+    RTW_INFO("[bfdebug] enter rtw_init_drv_sw\n");
 #ifdef CONFIG_RTW_CFGVENDOR_RANDOM_MAC_OUI
 	struct rtw_wdev_priv *pwdev_priv = adapter_wdev_data(padapter);
 #endif
@@ -2744,11 +2744,11 @@ u8 rtw_init_drv_sw(_adapter *padapter)
 	_rtw_spinlock_init(&padapter->br_ext_lock);
 #endif /* CONFIG_BR_EXT */
     
-    RTW_INFO("[mydebug] predetermine config_beamforming\n");
+    RTW_INFO("[bfdebug] predetermine config_beamforming\n");
 #ifdef CONFIG_BEAMFORMING
-    RTW_INFO("[mydebug] enter config_beamforming\n");
+    RTW_INFO("[bfdebug] enter config_beamforming\n");
 #ifdef RTW_BEAMFORMING_VERSION_2
-    RTW_INFO("[mydebug] enable Beamforming version 2\n");
+    RTW_INFO("[bfdebug] enable Beamforming version 2\n");
     rtw_bf_init(padapter);
 #endif /* RTW_BEAMFORMING_VERSION_2 */
 #endif /* CONFIG_BEAMFORMING */

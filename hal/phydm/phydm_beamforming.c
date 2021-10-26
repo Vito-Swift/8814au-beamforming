@@ -635,22 +635,22 @@ beamforming_send_vht_ndpa_packet(
 
 	else {
 		if (q_idx == BEACON_QUEUE) {/* Send to reserved page => FW NDPA */ 
-		    RTW_INFO("[mydebug] send ndp packet BEACON_QUEUE\n");	
+		    RTW_INFO("[bfdebug] send ndp packet BEACON_QUEUE\n");	
             ret = send_fw_vht_ndpa_packet(dm, RA, AID, BW);
         }
 		else {
 #ifdef SUPPORT_MU_BF
 #if (SUPPORT_MU_BF == 1)
-            RTW_INFO("[mydebug] send ndp packet mu_sounding enabled\n");
+            RTW_INFO("[bfdebug] send ndp packet mu_sounding enabled\n");
 			beam_info->is_mu_sounding = true;
 			ret = send_sw_vht_mu_ndpa_packet(dm, BW);
 #else
-            RTW_INFO("[mydebug] send ndp packet mu_sounding disabled (SUPPORT MU)\n");
+            RTW_INFO("[bfdebug] send ndp packet mu_sounding disabled (SUPPORT MU)\n");
 			beam_info->is_mu_sounding = false;
 			ret = send_sw_vht_ndpa_packet(dm, RA, AID, BW);
 #endif
 #else
-            RTW_INFO("[mydebug] send ndp packet mu_sounding disabled (NOT SUPPORT MU)\n");
+            RTW_INFO("[bfdebug] send ndp packet mu_sounding disabled (NOT SUPPORT MU)\n");
 			beam_info->is_mu_sounding = false;
 			ret = send_sw_vht_ndpa_packet(dm, RA, AID, BW);
 #endif
@@ -1594,6 +1594,7 @@ void phydm_beamforming_end_sw(
 				 (u8 *)&beam_info->beamformee_cur_idx);
 	} else {
 		if (entry->beamform_entry_state != BEAMFORMING_ENTRY_STATE_PROGRESSING) {
+            RTW_INFO("[bfdebug] [%s] BeamformStatus %d\n", __func__, entry->beamform_entry_state);
 			PHYDM_DBG(dm, DBG_TXBF, "[%s] BeamformStatus %d\n",
 				  __func__, entry->beamform_entry_state);
 			return;
@@ -1722,7 +1723,7 @@ void beamforming_sw_timer_callback(
 void phydm_beamforming_init(
 	void *dm_void)
 {
-	RTW_INFO("[mydebug] enter phydm_beamforming_init()\n");
+	RTW_INFO("[bfdebug] enter phydm_beamforming_init()\n");
     struct dm_struct *dm = (struct dm_struct *)dm_void;
 	struct _RT_BEAMFORMING_INFO *beam_info = &dm->beamforming_info;
 	struct _RT_BEAMFORMING_OID_INFO *beam_oid_info = &beam_info->beamforming_oid_info;

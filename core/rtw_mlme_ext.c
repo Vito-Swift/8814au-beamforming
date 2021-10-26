@@ -7261,7 +7261,7 @@ unsigned int OnAction_vht(_adapter *padapter, union recv_frame *precv_frame)
 	switch (action) {
 	case RTW_WLAN_ACTION_VHT_COMPRESSED_BEAMFORMING:
 #ifdef CONFIG_BEAMFORMING
-		RTW_INFO("[mydebug] [core/rtw_mlme_ext.c] RTW_WLAN_ACTION_VHT_COMPRESSED_BEAMFORMING\n");
+		RTW_INFO("[bfdebug] [core/rtw_mlme_ext.c] RTW_WLAN_ACTION_VHT_COMPRESSED_BEAMFORMING\n");
 		rtw_beamforming_get_report_frame(padapter, precv_frame);
 #endif /*CONFIG_BEAMFORMING*/
 		break;
