@@ -1470,7 +1470,7 @@ void beamforming_get_ndpa_frame(
 	if (get_frame_sub_type(p_ndpa_frame) != WIFI_NDPA)
 #endif
 		return;
-	else if (!(dm->support_ic_type & (ODM_RTL8812 | ODM_RTL8821 | ODM_RTL8814))) {
+	else if (!(dm->support_ic_type & (ODM_RTL8812 | ODM_RTL8821 | ODM_RTL8814A))) {
 		PHYDM_DBG(dm, DBG_TXBF, "[%s] not 8812 or 8821A or 8814, return\n",
 			  __func__);
 		return;
